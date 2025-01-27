@@ -8,7 +8,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.sofico_backend.sofico.models.UserClient;
 import com.sofico_backend.sofico.service.UserService;
@@ -27,7 +34,6 @@ public class UserController {
     @Autowired
     private JWTUtil jwtUtil;
 
-    // 1. Registro de usuário
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserClient user) {
         try {
@@ -40,7 +46,6 @@ public class UserController {
         }
     }
 
-    // 2. Login de usuário
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserClient user) {
         Optional<UserClient> foundUser = userService.findByUsername(user.getUsername());
@@ -51,7 +56,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    // 3. Obter informações do usuário pelo username
     @GetMapping("/{username}")
     @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
     public ResponseEntity<?> getUser(@PathVariable String username) {
@@ -60,14 +64,12 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 4. Listar todos os usuários (somente para administradores)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> listUsers() {
         return ResponseEntity.ok(userService.findAll());
     }
 
-    // 5. Atualizar informações de um usuário
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserClient user) {
@@ -82,7 +84,6 @@ public class UserController {
         }
     }
 
-    // 6. Deletar um usuário pelo ID (somente para administradores)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
@@ -95,7 +96,6 @@ public class UserController {
         }
     }
 
-    // 7. Verificar se um usuário é administrador
     @GetMapping("/{username}/isAdmin")
     @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
     public ResponseEntity<?> checkIfAdmin(@PathVariable String username) {
