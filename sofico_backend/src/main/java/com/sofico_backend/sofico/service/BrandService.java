@@ -3,7 +3,6 @@ package com.sofico_backend.sofico.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.sofico_backend.sofico.models.Brand;
@@ -12,8 +11,11 @@ import com.sofico_backend.sofico.repository.BrandRepository;
 @Service
 public class BrandService {
 
-    @Autowired
-    private BrandRepository brandRepository;
+    private final BrandRepository brandRepository;
+
+    public BrandService(BrandRepository brandRepository) {
+        this.brandRepository = brandRepository;
+    }
 
     public List<Brand> getAllBrands() {
         return brandRepository.findAll();
