@@ -1,9 +1,9 @@
 package com.sofico_backend.sofico.controller;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,29 +25,31 @@ import com.sofico_backend.sofico.util.JWTUtil;
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final JWTUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JWTUtil jwtUtil;
+    // Injeção por construtor
+    public UserController(UserService userService, PasswordEncoder passwordEncoder, JWTUtil jwtUtil) {
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+    }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserClient user) {
+    public ResponseEntity<UserClient> registerUser(@RequestBody UserClient user) {
         try {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             UserClient savedUser = userService.saveUser(user);
             return ResponseEntity.ok(savedUser);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to register user: " + e.getMessage());
+                    .body(null);
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserClient user) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody UserClient user) {
         Optional<UserClient> foundUser = userService.findByUsername(user.getUsername());
         if (foundUser.isPresent() && passwordEncoder.matches(user.getPassword(), foundUser.get().getPassword())) {
             String token = jwtUtil.generateToken(user.getUsername(), foundUser.get().isAdmin());
@@ -58,7 +60,7 @@ public class UserController {
 
     @GetMapping("/{username}")
     @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
-    public ResponseEntity<?> getUser(@PathVariable String username) {
+    public ResponseEntity<UserClient> getUser(@PathVariable String username) {
         return userService.findByUsername(username)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -66,39 +68,37 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> listUsers() {
+    public ResponseEntity<List<UserClient>> listUsers() {
         return ResponseEntity.ok(userService.findAll());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserClient user) {
+    public ResponseEntity<UserClient> updateUser(@PathVariable Long id, @RequestBody UserClient user) {
         try {
             user.setId(id);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             UserClient updatedUser = userService.updateUser(user);
             return ResponseEntity.ok(updatedUser);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to update user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to delete user: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/{username}/isAdmin")
     @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
-    public ResponseEntity<?> checkIfAdmin(@PathVariable String username) {
+    public ResponseEntity<Map<String, Boolean>> checkIfAdmin(@PathVariable String username) {
         boolean isAdmin = userService.isAdmin(username);
         return ResponseEntity.ok(Map.of("isAdmin", isAdmin));
     }

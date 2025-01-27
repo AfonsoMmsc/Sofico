@@ -2,7 +2,6 @@ package com.sofico_backend.sofico.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +20,11 @@ import com.sofico_backend.sofico.service.BrandService;
 @RequestMapping("/brands")
 public class BrandController {
 
-    @Autowired
-    private BrandService brandService;
+    private final BrandService brandService;
+
+    public BrandController(BrandService brandService) {
+        this.brandService = brandService;
+    }
 
     @GetMapping
     public ResponseEntity<List<Brand>> getAllBrands() {
