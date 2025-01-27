@@ -7,8 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SoficoApplication {
 
 	public static void main(String[] args) {
-
 		SpringApplication.run(SoficoApplication.class, args);
 	}
-
 }
