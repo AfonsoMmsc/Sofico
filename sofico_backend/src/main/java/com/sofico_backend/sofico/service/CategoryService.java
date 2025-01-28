@@ -21,16 +21,22 @@ public class CategoryService {
         return categoryRepository.findAll();
     }
 
-    public List<Category> getSubcategories(Long parentId) {
-        return categoryRepository.findByParentCategoryId(parentId);
-    }
-
     public Optional<Category> getCategoryById(Long id) {
         return categoryRepository.findById(id);
     }
 
     public Category addCategory(Category category) {
         return categoryRepository.save(category);
+    }
+
+    public Category updateCategory(Long id, Category category) {
+        return categoryRepository.findById(id)
+                .map(existingCategory -> {
+                    existingCategory.setName(category.getName());
+                    existingCategory.setParentCategory(category.getParentCategory());
+                    return categoryRepository.save(existingCategory);
+                })
+                .orElseThrow(() -> new RuntimeException("Category not found"));
     }
 
     public void deleteCategory(Long id) {
